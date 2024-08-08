@@ -1,6 +1,9 @@
-fastapi~=0.112.0
-sqlalchemy~=2.0.32
-uvicorn~=0.30.5
-psycopg2~=2.9.9
-python-dotenv~=1.0.1
-alembic~=1.13.2
+fastapi==0.112.0
+sqlalchemy==2.0.32
+uvicorn==0.30.5
+asyncpg==0.29.0
+python-dotenv==1.0.1
+alembic==1.13.2
+pydantic-settings==2.4.0
+fastapi-users[sqlalchemy]
+black==24.8.0
