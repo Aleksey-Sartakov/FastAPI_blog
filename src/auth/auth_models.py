@@ -12,7 +12,7 @@ class RoleDbModel(BaseDbModel):
 
 	id: Mapped[intpk]
 	name: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
-	permissions: Mapped[dict[str, List[str]]] = mapped_column(nullable=False)
+	permissions: Mapped[List[str]] = mapped_column(nullable=False)
 
 	users: Mapped[List["UserDbModel"]] = relationship(back_populates="role")
 
