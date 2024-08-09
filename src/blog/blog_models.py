@@ -1,47 +1,11 @@
 from datetime import datetime
-from typing import List, Annotated
+from typing import List
 
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, TIMESTAMP, ForeignKey, JSON
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, ForeignKey
 
-
-intpk = Annotated[int, mapped_column(primary_key=True)]
-
-
-class BaseDbModel(DeclarativeBase):
-	type_annotation_map = {
-		datetime: TIMESTAMP(),
-		dict[str, List[str]]: JSON
-	}
-
-	def __repr__(self):
-		columns = []
-		for column in self.__table__.columns.keys():
-			columns.append(f"{column} = {getattr(self, column)}")
-
-		return f"{self.__class__.__name__} {{ {','.join(columns)} }}"
-
-
-class RoleDbModel(BaseDbModel):
-	__tablename__ = "role"
-
-	id: Mapped[intpk]
-	name: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
-	permissions: Mapped[dict[str, List[str]]] = mapped_column(nullable=False)
-
-	users: Mapped[List["UserDbModel"]] = relationship(back_populates="role")
-
-
-class UserDbModel(SQLAlchemyBaseUserTable[int], BaseDbModel):
-	id: Mapped[intpk]
-	first_name: Mapped[str] = mapped_column(String(30), nullable=False)
-	last_name: Mapped[str] = mapped_column(String(30), nullable=False)
-	role_id: Mapped[int] = mapped_column(ForeignKey("role.id"))
-
-	role: Mapped[RoleDbModel] = relationship(back_populates="users", lazy="selectin")
-	articles: Mapped[List["ArticleDbModel"]] = relationship(back_populates="creator")
-	comments: Mapped[List["CommentDbModel"]] = relationship(back_populates="creator")
+from src.database_settings import BaseDbModel, intpk
+from src.auth.auth_models import UserDbModel
 
 
 class CategoryDbModel(BaseDbModel):
