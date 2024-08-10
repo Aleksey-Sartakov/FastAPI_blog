@@ -14,7 +14,6 @@ import sqlalchemy as sa
 
 
 from src.auth.auth_models import RoleDbModel, UserDbModel
-from src.database_settings import get_session
 
 # revision identifiers, used by Alembic.
 revision: str = "f82839410c7f"
@@ -24,6 +23,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+	conn = op.get_bind()
+	session = sa.orm.Session(bind=conn)
 	admin_role = RoleDbModel(
 		name="admin",
 		permissions=["admin", "base"]
@@ -32,10 +33,9 @@ def upgrade() -> None:
 		name="user",
 		permissions=["base"]
 	)
-	all_sessions = get_session()
-	session = next(all_sessions)
+
 	session.add_all([admin_role, user_role])
-	session.commit()
+	session.flush()
 
 	password_hash = PasswordHash.recommended()
 	admin_user = UserDbModel(
