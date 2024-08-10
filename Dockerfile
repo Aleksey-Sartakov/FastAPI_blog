@@ -12,4 +12,6 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-RUN chmod a+x docker/*.sh
+RUN chmod +x docker/*.sh
+
+#ENTRYPOINT ["sh", "/app/docker/start_app.sh"]

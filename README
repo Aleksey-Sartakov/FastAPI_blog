@@ -1,0 +1,9 @@
+# FastAPI blog
+
+## Запуск
+Приложение можно запустить в docker контейнере, вызвав команды:
+  docker-compose build
+  docker-compose up
+
+## Документация к API
+Документация к api будет доступна по адресу: http://localhost:8080/docs
