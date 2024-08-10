@@ -23,4 +23,4 @@ class UserUpdate(schemas.BaseUserUpdate):
 	first_name: Optional[str] = None
 	last_name: Optional[str] = None
 	email: Optional[str] = None
-	role_id: Optional[str] = None
+	role_id: Optional[int] = None

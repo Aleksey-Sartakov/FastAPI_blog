@@ -14,7 +14,7 @@ class CategoryDbModel(BaseDbModel):
 	id: Mapped[intpk]
 	name: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
 
-	articles: Mapped[List["ArticleDbModel"]] = relationship(back_populates="category")
+	articles: Mapped[List["ArticleDbModel"]] = relationship(back_populates="category", cascade="all, delete")
 
 
 class ArticleDbModel(BaseDbModel):
@@ -29,7 +29,7 @@ class ArticleDbModel(BaseDbModel):
 
 	creator: Mapped[UserDbModel] = relationship(back_populates="articles", lazy="selectin")
 	category: Mapped[CategoryDbModel] = relationship(back_populates="articles", lazy="selectin")
-	comments: Mapped[List["CommentDbModel"]] = relationship(back_populates="article")
+	comments: Mapped[List["CommentDbModel"]] = relationship(back_populates="article", cascade="all, delete")
 
 
 class CommentDbModel(BaseDbModel):

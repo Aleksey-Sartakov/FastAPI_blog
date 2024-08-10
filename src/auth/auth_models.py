@@ -25,4 +25,4 @@ class UserDbModel(SQLAlchemyBaseUserTable[int], BaseDbModel):
 
 	role: Mapped[RoleDbModel] = relationship(back_populates="users", lazy="selectin")
 	articles: Mapped[List["ArticleDbModel"]] = relationship(back_populates="creator")
-	comments: Mapped[List["CommentDbModel"]] = relationship(back_populates="creator")
+	comments: Mapped[List["CommentDbModel"]] = relationship(back_populates="creator", cascade="all, delete")
