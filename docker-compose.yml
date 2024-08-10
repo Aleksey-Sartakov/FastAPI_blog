@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: db
+    command: -p 5555
+    expose:
+      - 5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env-non-dev
+
+  app:
+    build:
+      context: .
+    env_file:
+      - .env-non-dev
+    container_name: blog_app
+    command: ["/app/docker/start_app.sh"]
+    ports:
+      - "8080:8000"
+    depends_on:
+      - db
