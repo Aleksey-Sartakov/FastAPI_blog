@@ -63,12 +63,3 @@ app.add_middleware(
 	allow_headers=[ "Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", "Access-Control-Allow-Origin",
 				    "Authorization" ]
 )
-
-@app.delete("/delete_article/{article_id}")
-def delete_article(article_id: int):
-	return
-
-
-@app.delete("/delete_comment/{comment_id}")
-def delete_comment(comment_id: int):
-	return

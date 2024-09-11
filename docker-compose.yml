@@ -24,7 +24,6 @@ services:
       - .env-non-dev
     container_name: blog_app
     command: sh -c "alembic upgrade head && gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
-#    command: ["/app/docker/start_app.sh"]
     ports:
       - "8000:8000"
     depends_on:
