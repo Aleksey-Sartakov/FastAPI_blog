@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Annotated, Literal
 
-from pydantic import BaseModel, field_validator
+from fastapi import Depends
+from pydantic import BaseModel, field_validator, PositiveInt, NonNegativeInt
 
 
 class ArticleCreate(BaseModel):
@@ -49,3 +50,13 @@ class CategoryRead(BaseModel):
 
 class CategoryReadWithArticles(CategoryRead):
 	articles: List["ArticleDbModel"]
+
+
+class Pagination(BaseModel):
+	limit: PositiveInt = 100
+	offset: NonNegativeInt = 0
+
+
+PaginationDependency = Annotated[Pagination, Depends()]
+
+OrderingMethods = Literal["asc", "desc"]

@@ -6,12 +6,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.blog.custom_exceptions import AccessForbiddenException
+from src.blog.blog_models import CategoryDbModel, ArticleDbModel, CommentDbModel
 from src.blog.schemas import (
 	CategoryRead, CategoryReadWithArticles, ArticleCreate, ArticleRead,
-	CommentCreate, CommentRead
+	CommentCreate, CommentRead, PaginationDependency, OrderingMethods
 )
-from src.blog.blog_models import CategoryDbModel, ArticleDbModel, CommentDbModel
+
 from src.database_settings import get_async_session
+
 from src.auth.manager import fastapi_users
 from src.auth.auth_models import UserDbModel
 
@@ -48,22 +50,21 @@ async def get_all_categories(session: AsyncSession = Depends(get_async_session))
 @router_blog.get("/articles_by_category")
 async def get_articles_by_category(
 		category_id: int,
-		limit: int = 100,
-		offset: int = 0,
-		order: str = "asc",
+		pagination: PaginationDependency,
+		order: OrderingMethods = "asc",
 		session: AsyncSession = Depends(get_async_session)
 ):
 	try:
 		if order == "asc":
-			order_rule = ArticleDbModel.date_of_creation.desc
-		else:
 			order_rule = ArticleDbModel.date_of_creation.asc
+		else:
+			order_rule = ArticleDbModel.date_of_creation.desc
 
 		query = (
 			select(ArticleDbModel)
 			.filter_by(category_id=category_id)
-			.limit(limit)
-			.offset(offset)
+			.limit(pagination.limit)
+			.offset(pagination.offset)
 			.order_by(order_rule())
 		)
 
@@ -87,23 +88,22 @@ async def get_articles_by_category(
 
 @router_blog.get("/articles_of_current_user", dependencies=[Depends(current_active_user)])
 async def get_articles_of_current_user(
-		limit: int = 100,
-		offset: int = 0,
-		order: str = "asc",
+		pagination: PaginationDependency,
+		order: OrderingMethods = "asc",
 		session: AsyncSession = Depends(get_async_session),
 		user: UserDbModel = Depends(current_user)
 ):
 	try:
 		if order == "asc":
-			order_rule = ArticleDbModel.date_of_creation.desc
-		else:
 			order_rule = ArticleDbModel.date_of_creation.asc
+		else:
+			order_rule = ArticleDbModel.date_of_creation.desc
 
 		query = (
 			select(ArticleDbModel)
 			.filter_by(user_id=user.id)
-			.limit(limit)
-			.offset(offset)
+			.limit(pagination.limit)
+			.offset(pagination.offset)
 			.order_by(order_rule())
 		)
 
@@ -163,21 +163,20 @@ async def get_article_content(
 @router_blog.get("/comments")
 async def get_comments_by_article(
 		article_id: int,
-		limit: int = 100,
-		offset: int = 0,
-		order: str = "asc",
+		pagination: PaginationDependency,
+		order: OrderingMethods = "asc",
 		session: AsyncSession = Depends(get_async_session)):
 	try:
 		if order == "asc":
-			order_rule = CommentDbModel.date_of_creation.desc
-		else:
 			order_rule = CommentDbModel.date_of_creation.asc
+		else:
+			order_rule = CommentDbModel.date_of_creation.desc
 
 		query = (
 			select(CommentDbModel)
 			.filter_by(article_id=article_id)
-			.limit(limit)
-			.offset(offset)
+			.limit(pagination.limit)
+			.offset(pagination.offset)
 			.order_by(order_rule())
 		)
 
