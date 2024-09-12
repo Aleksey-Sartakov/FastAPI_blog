@@ -60,3 +60,5 @@ class Pagination(BaseModel):
 PaginationDependency = Annotated[Pagination, Depends()]
 
 OrderingMethods = Literal["asc", "desc"]
+
+ComplaintStatuses = Literal["in_processing", "rejected", "confirmed"]

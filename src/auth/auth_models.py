@@ -14,7 +14,7 @@ class RoleDbModel(BaseDbModel):
 	name: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
 	permissions: Mapped[List[str]] = mapped_column(nullable=False)
 
-	users: Mapped[List["UserDbModel"]] = relationship(back_populates="role")
+	users: Mapped[List["UserDbModel"]] = relationship(back_populates="role", lazy="selectin")
 
 
 class UserDbModel(SQLAlchemyBaseUserTable[int], BaseDbModel):
@@ -23,6 +23,7 @@ class UserDbModel(SQLAlchemyBaseUserTable[int], BaseDbModel):
 	last_name: Mapped[str] = mapped_column(String(30), nullable=False)
 	role_id: Mapped[int] = mapped_column(ForeignKey("role.id"))
 
-	role: Mapped[RoleDbModel] = relationship(back_populates="users", lazy="selectin")
-	articles: Mapped[List["ArticleDbModel"]] = relationship(back_populates="creator")
-	comments: Mapped[List["CommentDbModel"]] = relationship(back_populates="creator", cascade="all, delete")
+	role: Mapped[RoleDbModel] = relationship(back_populates="users", lazy="joined")
+	articles: Mapped[List["ArticleDbModel"]] = relationship(back_populates="creator", lazy="selectin")
+	comments: Mapped[List["CommentDbModel"]] = relationship(back_populates="creator", lazy="selectin")
+	complaints: Mapped[List["ComplaintDbModel"]] = relationship(back_populates="creator", lazy="selectin")
