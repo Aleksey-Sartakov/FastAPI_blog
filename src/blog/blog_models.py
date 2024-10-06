@@ -58,4 +58,4 @@ class ComplaintDbModel(BaseDbModel):
 	user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
 
 	article: Mapped[ArticleDbModel] = relationship(back_populates="complaints", lazy="joined")
-	creator: Mapped[UserDbModel] = relationship(back_populates="articles", lazy="joined")
+	creator: Mapped[UserDbModel] = relationship(back_populates="complaints", lazy="joined")
