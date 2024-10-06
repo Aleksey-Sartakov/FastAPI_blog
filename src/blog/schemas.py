@@ -1,8 +1,12 @@
 from datetime import datetime
-from typing import Optional, List, Annotated, Literal
+from typing import Optional, Annotated, Literal
 
 from fastapi import Depends
 from pydantic import BaseModel, field_validator, PositiveInt, NonNegativeInt
+
+
+ComplaintStatuses = Literal["in_processing", "rejected", "confirmed"]
+OrderingMethods = Literal["asc", "desc"]
 
 
 class ArticleCreate(BaseModel):
@@ -48,8 +52,23 @@ class CategoryRead(BaseModel):
 	name: str
 
 
-class CategoryReadWithArticles(CategoryRead):
-	articles: List["ArticleDbModel"]
+class ComplaintCreateModel(BaseModel):
+	content: str
+	article_id: int
+
+
+class ComplaintReadModel(BaseModel):
+	id: int
+	content: str
+	status: ComplaintStatuses
+	date_of_creation: datetime
+	article_id: int
+	user_id: int
+
+	@field_validator("date_of_creation")
+	@classmethod
+	def date_to_string(cls, date_instance: datetime) -> str:
+		return date_instance.strftime("%Y-%m-%d %H:%M")
 
 
 class Pagination(BaseModel):
@@ -58,7 +77,3 @@ class Pagination(BaseModel):
 
 
 PaginationDependency = Annotated[Pagination, Depends()]
-
-OrderingMethods = Literal["asc", "desc"]
-
-ComplaintStatuses = Literal["in_processing", "rejected", "confirmed"]

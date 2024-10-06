@@ -1,15 +1,16 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import contains_eager, lazyload
 
 from src.blog.custom_exceptions import AccessForbiddenException
-from src.blog.blog_models import CategoryDbModel, ArticleDbModel, CommentDbModel
+from src.blog.blog_models import CategoryDbModel, ArticleDbModel, CommentDbModel, ComplaintDbModel
 from src.blog.schemas import (
-	CategoryRead, CategoryReadWithArticles, ArticleCreate, ArticleRead,
-	CommentCreate, CommentRead, PaginationDependency, OrderingMethods
+	CategoryRead, ArticleCreate, ArticleRead, CommentCreate, CommentRead, PaginationDependency, OrderingMethods,
+	ComplaintCreateModel, ComplaintReadModel
 )
 
 from src.database_settings import get_async_session
@@ -198,6 +199,99 @@ async def get_comments_by_article(
 		})
 
 
+@router_blog.get("/get_articles_with_complaints", dependencies=[Depends(current_superuser_user)])
+async def get_articles_with_complaints(
+		pagination: PaginationDependency,
+		order: OrderingMethods = "asc",
+		session: AsyncSession = Depends(get_async_session)
+):
+	try:
+		if order == "asc":
+			order_rule = ArticleDbModel.date_of_creation.asc
+		else:
+			order_rule = ArticleDbModel.date_of_creation.desc
+
+		query = (
+			select(ArticleDbModel, func.count(ComplaintDbModel.id))
+			.join(ComplaintDbModel)
+			.group_by(ArticleDbModel.id)
+			.order_by(order_rule())
+			.limit(pagination.limit)
+			.offset(pagination.offset)
+			.options(lazyload(ArticleDbModel.creator), lazyload(ArticleDbModel.category))
+		)
+
+		result = await session.execute(query)
+		result_orm = result.all()
+		json_result = []
+		for article, complaints_count in result_orm:
+			json_result.append([ArticleRead.model_validate(article, from_attributes=True).model_dump(), complaints_count])
+		json_result = json.dumps(json_result)
+
+		return {
+			"status": "success",
+			"data": json_result,
+			"details": None
+		}
+
+	except Exception as e:
+		raise HTTPException(status_code=500, detail={
+			"status": "error",
+			"data": None,
+			"details": str(e)
+		})
+
+
+@router_blog.get("/complaints", dependencies=[Depends(current_superuser_user)])
+async def get_complaints(
+		pagination: PaginationDependency,
+		order: OrderingMethods = "asc",
+		article_id: int | None = None,
+		session: AsyncSession = Depends(get_async_session)
+):
+	try:
+		if order == "asc":
+			order_rule = ComplaintDbModel.date_of_creation.asc
+		else:
+			order_rule = ComplaintDbModel.date_of_creation.desc
+
+		if article_id:
+			query = (
+				select(ComplaintDbModel)
+				.where(ComplaintDbModel.article_id == article_id)
+				.order_by(order_rule())
+				.offset(pagination.offset)
+				.limit(pagination.limit)
+			)
+		else:
+			query = (
+				select(ComplaintDbModel)
+				.order_by(order_rule())
+				.offset(pagination.offset)
+				.limit(pagination.limit)
+			)
+
+		result = await session.execute(query)
+		result_orm = result.scalars().all()
+		json_result = []
+		for complaint_instance in result_orm:
+			json_result.append(ComplaintReadModel.model_validate(complaint_instance, from_attributes=True).model_dump())
+		json_result = json.dumps(json_result)
+
+		return {
+			"status": "success",
+			"data": json_result,
+			"details": None
+		}
+
+	except Exception as e:
+		raise HTTPException(status_code=500, detail={
+			"status": "error",
+			"data": None,
+			"details": str(e)
+		})
+
+
 @router_blog.post("/add_category", dependencies=[Depends(current_active_user)])
 async def create_new_category(new_category_name: str, session: AsyncSession = Depends(get_async_session)):
 	"""
@@ -267,6 +361,7 @@ async def create_new_comment(
 	"""
 	This is some description
 	"""
+
 	try:
 		new_comment = CommentDbModel(**new_comment_data.dict(), user_id=user.id)
 		session.add(new_comment)
@@ -274,6 +369,39 @@ async def create_new_comment(
 		await session.commit()
 
 		return {"status": "success", "data": {"id": new_comment.id}}
+
+	except IntegrityError as e:
+		raise HTTPException(status_code=400, detail={
+			"status": "error",
+			"data": None,
+			"details": str(e)
+		})
+
+	except Exception as e:
+		raise HTTPException(status_code=500, detail={
+			"status": "error",
+			"data": None,
+			"details": str(e)
+		})
+
+
+@router_blog.post("/add_complaint", dependencies=[Depends(current_active_user)])
+async def create_new_complaint(
+		new_complaint_data: ComplaintCreateModel,
+		session: AsyncSession = Depends(get_async_session),
+		user: UserDbModel = Depends(current_user)
+):
+	"""
+	This is some description
+	"""
+
+	try:
+		new_complaint = ComplaintDbModel(**new_complaint_data.dict(), user_id=user.id)
+		session.add(new_complaint)
+
+		await session.commit()
+
+		return {"status": "success", "data": {"id": new_complaint.id}}
 
 	except IntegrityError as e:
 		raise HTTPException(status_code=400, detail={
@@ -299,6 +427,7 @@ async def delete_article(
 	"""
 	This is some description
 	"""
+
 	try:
 		query = (
 			select(ArticleDbModel)
@@ -342,6 +471,7 @@ async def delete_comment(comment_id: int, session: AsyncSession = Depends(get_as
 	"""
 	This is some description
 	"""
+
 	try:
 		query = (
 			select(CommentDbModel)
@@ -360,6 +490,28 @@ async def delete_comment(comment_id: int, session: AsyncSession = Depends(get_as
 			"status": "error",
 			"data": None,
 			"details": "There are no comment with this id."
+		})
+
+	except Exception as e:
+		raise HTTPException(status_code=500, detail={
+			"status": "error",
+			"data": None,
+			"details": str(e)
+		})
+
+
+@router_blog.delete("/delete_complaint", dependencies=[Depends(current_superuser_user)], status_code=status.HTTP_204_NO_CONTENT)
+async def delete_complaint(complaint_id: int, session: AsyncSession = Depends(get_async_session)):
+	try:
+		complaint = await session.get(ComplaintDbModel, complaint_id)
+		await session.delete(complaint)
+		await session.commit()
+
+	except IndexError as e:
+		raise HTTPException(status_code=400, detail={
+			"status": "error",
+			"data": None,
+			"details": "There are no complaint with this id."
 		})
 
 	except Exception as e:
