@@ -22,7 +22,8 @@ class BaseDbModel(DeclarativeBase):
 		for column in self.__table__.columns.keys():
 			columns.append(f"{column} = {getattr(self, column)}")
 
-		return f"{self.__class__.__name__} {{ {','.join(columns)} }}"
+		parameters_separator = ',\n\t'
+		return f"{self.__class__.__name__} {{ \n\t{parameters_separator.join(columns)}\n }}"
 
 
 def get_session() -> Generator[Session, None, None]:
