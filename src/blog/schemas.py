@@ -23,8 +23,8 @@ class ArticleRead(BaseModel):
 	category_id: int
 	user_id: int
 
-	@field_validator("date_of_creation")
 	@classmethod
+	@field_validator("date_of_creation")
 	def date_to_string(cls, date_instance: datetime) -> str:
 		return date_instance.strftime("%Y-%m-%d %H:%M")
 
